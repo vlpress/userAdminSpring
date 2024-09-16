@@ -27,7 +27,7 @@ public class MessageService {
      * @param user
      */
     public void sendUser(String operation, User user) {
-        if("DELETE".equals(operation))
+        if(ServiceConstants.DELETE.equals(operation) || ServiceConstants.CREATE.equals(operation))
           receiveMessage("userEmail = '" + user.getEmail() + "'", true);
 
         Connection connection = null;
@@ -87,9 +87,8 @@ public class MessageService {
             connection.start();
 
             while (true) {
-                Message message = consumer.receive(1000);
+                Message message = consumer.receive(200);
                 if (message instanceof TextMessage) {
-                    String operation = message.getStringProperty(ServiceConstants.OPERATION);
                     String userJson = ((TextMessage) message).getText();
 
                     if (isAcknowledge) {

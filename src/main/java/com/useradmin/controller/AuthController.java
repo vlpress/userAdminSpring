@@ -33,8 +33,7 @@ public class AuthController {
 
         UserDetails userDetails = authUserDetailsService.loadUserByUsername(loginRequest.getEmail());
 
-        if (passwordEncoder.matches(encryptedPassword, userDetails.getPassword())) { // TODO: for JWT implementation
-        //if (encryptedPassword.equals(userDetails.getPassword())) {
+        if (passwordEncoder.matches(encryptedPassword, userDetails.getPassword())) {
             String role = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .findFirst()
@@ -49,7 +48,6 @@ public class AuthController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
-
     }
 
 }
