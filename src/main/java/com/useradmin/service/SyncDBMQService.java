@@ -38,7 +38,7 @@ public class SyncDBMQService {
     /**
      * Sync users from DB to MQ
      */
-    @Scheduled(fixedRate = 3000)
+    @Scheduled(fixedRate = 5000)
     public void scheduleSyncUsers() {
         if (isDatabaseAlive())
             syncUsers();
@@ -56,15 +56,17 @@ public class SyncDBMQService {
             userRepository.deleteByEmail(user.getEmail());
         }
 
+        // 2. get CREATED messages from MQ and save it to DB and delete it from MQ
         usersFromMq = receiveUsersFromMQ(ServiceConstants.OPERATION+" = '"+ServiceConstants.CREATE+"'", true);
         userRepository.saveAll(usersFromMq);
 
+        // 3. get all users from DB and check if it is in MQ, if not send it to MQ by setting operation as NONE
         List<User> usersFromDb = userRepository.findAll();
         List<User> mqUserList;
         for (User user : usersFromDb) {
             mqUserList = messageService.receiveMessage("userEmail = '" + user.getEmail() + "'", false);
             if (mqUserList.isEmpty()) {
-                messageService.sendUser("NONE", user);
+                messageService.sendUser(ServiceConstants.NONE, user);
             }
         }
         System.out.println("Sync completed");
