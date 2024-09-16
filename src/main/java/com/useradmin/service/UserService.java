@@ -23,6 +23,11 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final MessageService messageService;
 
+    /**
+     * Create user
+     * @param user
+     * @return
+     */
     @Retryable(
             value = { DataAccessException.class },
             maxAttempts = 3,
@@ -34,17 +39,22 @@ public class UserService {
             user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
 
             if (user.getRoles() == null || user.getRoles().isEmpty()) {
-                Role defaultRole = roleRepository.findByRoleName("USER")
+                Role defaultRole = roleRepository.findByRoleName(ServiceConstants.USER)
                         .orElseThrow(() -> new RuntimeException("Default role not found"));
                 user.setRoles(List.of(defaultRole));
             }
             return userRepository.save(user);
         }catch (DataAccessException ex){
-            messageService.sendUser("CREATE", user);
+            messageService.sendUser(ServiceConstants.CREATE, user);
             return user;
         }
     }
 
+    /**
+     * Get user details
+     * @param email
+     * @return
+     */
     @Retryable(
             value = { DataAccessException.class },
             maxAttempts = 3,
@@ -55,6 +65,10 @@ public class UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
+    /**
+     * Get all users
+     * @return
+     */
     @Retryable(
             value = { DataAccessException.class },
             maxAttempts = 3,
@@ -64,10 +78,14 @@ public class UserService {
         try {
             return userRepository.findAll();
         }catch (DataAccessException ex){
-            return messageService.receiveMessage("operation = 'NONE' OR operation = 'CREATE'",false);
+            return messageService.receiveMessage(ServiceConstants.OPERATION + " = '"+ServiceConstants.NONE+"' OR "+ServiceConstants.OPERATION+" = '"+ServiceConstants.CREATE+"'",false);
         }
     }
 
+    /**
+     * Delete user
+     * @param email
+     */
     @Retryable(
             value = { DataAccessException.class },
             maxAttempts = 3,

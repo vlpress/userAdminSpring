@@ -18,12 +18,9 @@ import java.util.Objects;
 @Service
 public class MessageService {
 
-    private static final String OPERATION = "operation";
-    private static final String QUEUE_NAME = "users";
 
     private final JmsTemplate jmsTemplate;
     private final ObjectMapper objectMapper;
-
 
     /**
      * @param operation: CREATE or DELETE or NONE
@@ -42,10 +39,10 @@ public class MessageService {
             TextMessage message = session.createTextMessage();
             message.setStringProperty("userId", String.valueOf(user.getId()));
             message.setStringProperty("userEmail", user.getEmail());
-            message.setStringProperty(OPERATION, operation);
+            message.setStringProperty(ServiceConstants.OPERATION, operation);
             message.setText(serializeUser(user));
 
-            MessageProducer producer = session.createProducer(session.createQueue(QUEUE_NAME));
+            MessageProducer producer = session.createProducer(session.createQueue(ServiceConstants.QUEUE_NAME));
             producer.send(message);
 
         } catch (JMSException e) {
@@ -56,30 +53,12 @@ public class MessageService {
         }
     }
 
-
-
-//    /**
-//     *
-//     * @param operation: CREATE or DELETE or NONE
-//     * @param user
-//     * @throws JMSException
-//     */
-//
-//    public Message sendUser(String operation, User user) {
-//        if("DELETE".equals(operation))
-//            receiveMessage("userEmail = '" + user.getEmail() + "'", true);
-//
-//        return jmsTemplate.sendAndReceive(QUEUE_NAME, session -> {
-//            TextMessage message = session.createTextMessage();
-//            message.setStringProperty("userId", String.valueOf(user.getId()));
-//            message.setStringProperty("userEmail", user.getEmail());
-//            message.setStringProperty(OPERATION, operation);
-//            message.setText(serializeUser(user)); // Serialize User to JSON
-//            return message;
-//        });
-//
-//    }
-
+    /**
+     *
+     * @param user
+     * @return
+     * @throws JMSException
+     */
     private String serializeUser(User user) throws JMSException {
         try {
             return objectMapper.writeValueAsString(user);
@@ -104,13 +83,13 @@ public class MessageService {
             connection = Objects.requireNonNull(jmsTemplate.getConnectionFactory()).createConnection();
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
-            MessageConsumer consumer = session.createConsumer(session.createQueue(QUEUE_NAME), selector);
+            MessageConsumer consumer = session.createConsumer(session.createQueue(ServiceConstants.QUEUE_NAME), selector);
             connection.start();
 
             while (true) {
-                Message message = consumer.receive(1000); // Wait for up to 1 second for the message
+                Message message = consumer.receive(1000);
                 if (message instanceof TextMessage) {
-                    String operation = message.getStringProperty(OPERATION);
+                    String operation = message.getStringProperty(ServiceConstants.OPERATION);
                     String userJson = ((TextMessage) message).getText();
 
                     if (isAcknowledge) {

@@ -22,6 +22,11 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
     private AuthUserDetailsService authUserDetailsService;
 
+    /**
+     * Login
+     * @param loginRequest
+     * @return
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         String encryptedPassword = loginRequest.getPassword();

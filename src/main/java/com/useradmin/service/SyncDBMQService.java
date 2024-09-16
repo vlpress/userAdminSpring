@@ -23,6 +23,9 @@ public class SyncDBMQService {
     private final MessageService messageService;
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * Check if database is alive
+     */
     public boolean isDatabaseAlive() {
         try {
             jdbcTemplate.queryForObject("SELECT 1", Integer.class);
@@ -32,22 +35,28 @@ public class SyncDBMQService {
         }
     }
 
+    /**
+     * Sync users from DB to MQ
+     */
     @Scheduled(fixedRate = 3000)
     public void scheduleSyncUsers() {
         if (isDatabaseAlive())
             syncUsers();
     }
 
+    /**
+     *  Sync users from DB to MQ
+     */
     @Async
     public void syncUsers() {
 
         // 1. get DELETED messages from MQ and delete it from DB and MQ
-        List<User> usersFromMq = receiveUsersFromMQ("operation = 'DELETE'", true);
+        List<User> usersFromMq = receiveUsersFromMQ(ServiceConstants.OPERATION+" = '"+ServiceConstants.DELETE+"'", true);
         for (User user : usersFromMq) {
             userRepository.deleteByEmail(user.getEmail());
         }
 
-        usersFromMq = receiveUsersFromMQ("operation = 'CREATE'", true);
+        usersFromMq = receiveUsersFromMQ(ServiceConstants.OPERATION+" = '"+ServiceConstants.CREATE+"'", true);
         userRepository.saveAll(usersFromMq);
 
         List<User> usersFromDb = userRepository.findAll();
@@ -61,6 +70,9 @@ public class SyncDBMQService {
         System.out.println("Sync completed");
     }
 
+    /**
+     * Receive users from MQ
+     */
     private List<User> receiveUsersFromMQ(String selector, boolean isAcknowledge) {
         try {
             return messageService.receiveMessage(selector, isAcknowledge);

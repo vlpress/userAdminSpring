@@ -3,7 +3,6 @@ package com.useradmin.service;
 import com.useradmin.entity.User;
 import com.useradmin.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,6 +16,12 @@ public class AuthUserDetailsService implements UserDetailsService {
 
     private UserRepository userRepository;
 
+    /**
+     * Load user by username
+     * @param username
+     * @return
+     * @throws UsernameNotFoundException
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
