@@ -2,6 +2,7 @@ package com.useradmin.service;
 
 import com.useradmin.entity.User;
 import com.useradmin.repository.UserRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -10,10 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Service
 public class AuthUserDetailsService implements UserDetailsService {
 
-    @Autowired
     private UserRepository userRepository;
 
     @Override

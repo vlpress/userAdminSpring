@@ -21,6 +21,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final MessageService messageService;
 
     @Retryable(
             value = { DataAccessException.class },
@@ -28,15 +29,20 @@ public class UserService {
             backoff = @Backoff(delay = 2000)
     )
     public User createUser(User user) {
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        try {
+            PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
 
-        if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            Role defaultRole = roleRepository.findByRoleName("USER")
-                    .orElseThrow(() -> new RuntimeException("Default role not found"));
-            user.setRoles(List.of(defaultRole));
+            if (user.getRoles() == null || user.getRoles().isEmpty()) {
+                Role defaultRole = roleRepository.findByRoleName("USER")
+                        .orElseThrow(() -> new RuntimeException("Default role not found"));
+                user.setRoles(List.of(defaultRole));
+            }
+            return userRepository.save(user);
+        }catch (DataAccessException ex){
+            messageService.sendUser("CREATE", user);
+            return user;
         }
-        return userRepository.save(user);
     }
 
     @Retryable(
@@ -55,7 +61,11 @@ public class UserService {
             backoff = @Backoff(delay = 2000)
     )
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        try {
+            return userRepository.findAll();
+        }catch (DataAccessException ex){
+            return messageService.receiveMessage("operation = 'NONE' OR operation = 'CREATE'",false);
+        }
     }
 
     @Retryable(
@@ -63,7 +73,13 @@ public class UserService {
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+    public void deleteUser(String email) {
+        try {
+            userRepository.deleteByEmail(email);
+        }catch (DataAccessException ex){
+            User user = new User();
+            user.setEmail(email);
+            messageService.sendUser("DELETE", user);
+        }
     }
 }
