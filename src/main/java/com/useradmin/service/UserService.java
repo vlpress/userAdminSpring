@@ -1,5 +1,6 @@
 package com.useradmin.service;
 
+import com.useradmin.entity.Permission;
 import com.useradmin.entity.Role;
 import com.useradmin.entity.User;
 import com.useradmin.repository.RoleRepository;
@@ -13,7 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 
 @AllArgsConstructor
 @Service
@@ -45,6 +46,10 @@ public class UserService {
             }
             return userRepository.save(user);
         }catch (DataAccessException ex){
+            Permission permission = new Permission(1L, ServiceConstants.READ);
+            Set< Permission > permissions = Collections.singleton(permission);
+            Role role = new Role(2L, ServiceConstants.USER, permissions);
+            user.setRoles(new ArrayList<>(List.of(role)));
             messageService.sendUser(ServiceConstants.CREATE, user);
             return user;
         }
@@ -77,7 +82,7 @@ public class UserService {
     public List<User> getAllUsers() {
         try {
             return userRepository.findAll();
-        }catch (DataAccessException ex){
+        }catch (Exception ex){
             return messageService.receiveMessage(ServiceConstants.OPERATION + " = '"+ServiceConstants.NONE+"' OR "+ServiceConstants.OPERATION+" = '"+ServiceConstants.CREATE+"'",false);
         }
     }

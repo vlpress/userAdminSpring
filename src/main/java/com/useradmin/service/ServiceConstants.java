@@ -7,4 +7,5 @@ public class ServiceConstants {
     public static final String CREATE = "CREATE";
     public static final String USER = "USER";
     public static final String NONE = "NONE";
+    public static final String READ = "READ";
 }

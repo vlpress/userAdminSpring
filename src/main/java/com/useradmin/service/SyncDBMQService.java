@@ -1,11 +1,10 @@
 package com.useradmin.service;
 
 import com.useradmin.entity.User;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.useradmin.repository.UserRepository;
+import com.useradmin.utils.DBUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,29 +17,16 @@ import java.util.List;
 public class SyncDBMQService {
 
     private final UserRepository userRepository;
-    private final JmsTemplate jmsTemplate;
-    private final ObjectMapper objectMapper;
     private final MessageService messageService;
     private final JdbcTemplate jdbcTemplate;
-
-    /**
-     * Check if database is alive
-     */
-    public boolean isDatabaseAlive() {
-        try {
-            jdbcTemplate.queryForObject("SELECT 1", Integer.class);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
+    private DBUtils dbUtils;
 
     /**
      * Sync users from DB to MQ
      */
     @Scheduled(fixedRate = 5000)
     public void scheduleSyncUsers() {
-        if (isDatabaseAlive())
+        if (dbUtils.isDatabaseAlive())
             syncUsers();
     }
 
