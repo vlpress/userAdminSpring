@@ -16,7 +16,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-//@AllArgsConstructor
 @Service
 public class AuthUserDetailsService implements UserDetailsService {
 
@@ -45,9 +44,7 @@ public class AuthUserDetailsService implements UserDetailsService {
         if(dbUtils.isDatabaseAlive()){
             User user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            System.out.println("PASSWORD:"+user.getPasswordHash());
 
-            //UserDetails userDetails = new org.springframework.security.core.userdetails.User(
             CachedUserDetails userDetails = new CachedUserDetails(
                     user.getEmail(),
                     user.getPasswordHash(),

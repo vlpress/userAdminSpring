@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import java.util.*;
 
@@ -82,8 +83,11 @@ public class UserService {
     public List<User> getAllUsers() {
         try {
             return userRepository.findAll();
-        }catch (Exception ex){
-            return messageService.receiveMessage(ServiceConstants.OPERATION + " = '"+ServiceConstants.NONE+"' OR "+ServiceConstants.OPERATION+" = '"+ServiceConstants.CREATE+"'",false);
+        } catch (CannotCreateTransactionException ex) {
+            return messageService.receiveMessage(ServiceConstants.OPERATION + " = '" + ServiceConstants.NONE + "' OR " + ServiceConstants.OPERATION + " = '" + ServiceConstants.CREATE + "'", false);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return Collections.emptyList();
         }
     }
 
@@ -99,10 +103,12 @@ public class UserService {
     public void deleteUser(String email) {
         try {
             userRepository.deleteByEmail(email);
-        }catch (DataAccessException ex){
+        }catch (CannotCreateTransactionException ex){
             User user = new User();
             user.setEmail(email);
-            messageService.sendUser("DELETE", user);
+            messageService.sendUser(ServiceConstants.DELETE, user);
+        }catch (Exception ex){
+           ex.printStackTrace();
         }
     }
 }
